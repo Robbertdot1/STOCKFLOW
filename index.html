@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StockFlow Pro — Inventory Management</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--primary:#2563eb;--primary2:#1d4ed8;--danger:#dc2626;--success:#059669;--warning:#d97706;--sidebar:#111827}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}.app{display:flex;min-height:100vh}
+.sidebar{width:250px;background:var(--sidebar);color:#fff;padding:22px 14px;position:fixed;inset:0 auto 0 0;z-index:20}
+.logo{font-size:21px;font-weight:800;padding:8px 12px 25px}.logo span{color:#60a5fa}
+.nav button{width:100%;text-align:left;background:transparent;color:#cbd5e1;padding:12px 14px;border-radius:9px;margin:2px 0}.nav button.active,.nav button:hover{background:#1f2937;color:#fff}
+.main{margin-left:250px;width:calc(100% - 250px);padding:24px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}.top h1{margin:0;font-size:25px}.top p{margin:5px 0 0;color:var(--muted)}
+.btn{padding:10px 15px;border-radius:8px;font-weight:700}.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary2)}.btn-light{background:#fff;border:1px solid var(--line)}.btn-danger{background:#fee2e2;color:#b91c1c}.btn-success{background:#d1fae5;color:#047857}
+.page{display:none}.page.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:20px}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:17px}.card .label{color:var(--muted);font-size:12px;font-weight:700}.card .value{font-size:25px;font-weight:800;margin-top:8px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:18px;overflow:hidden}.panel-head{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line)}.panel-head h2{font-size:16px;margin:0}.panel-body{padding:18px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap}.toolbar input,.toolbar select{min-width:170px}
+input,select,textarea{border:1px solid #d1d5db;border-radius:8px;padding:10px;background:#fff;color:var(--text)}input:focus,select:focus,textarea:focus{outline:2px solid #bfdbfe;border-color:var(--primary)}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:11px 12px;border-bottom:1px solid var(--line);text-align:left;font-size:13px;vertical-align:middle}th{background:#f8fafc;color:#4b5563;font-size:12px;white-space:nowrap}td.num,th.num{text-align:right}
+.empty{text-align:center;color:var(--muted);padding:45px 15px}.badge{display:inline-block;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:800}.green{background:#d1fae5;color:#047857}.yellow{background:#fef3c7;color:#92400e}.red{background:#fee2e2;color:#b91c1c}.blue{background:#dbeafe;color:#1d4ed8}
+.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}.field label{display:block;font-size:12px;font-weight:700;color:#4b5563;margin-bottom:6px}.field input,.field select,.field textarea{width:100%}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.58);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}.modal.show{display:flex}.modal-box{background:#fff;border-radius:14px;width:min(1100px,100%);max-height:94vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}.modal-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.modal-head h2{margin:0;font-size:19px}.modal-body{padding:20px}.modal-foot{padding:16px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
+.close{background:#f3f4f6;width:34px;height:34px;border-radius:50%;font-size:20px}.invoice-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.scan{display:flex;gap:8px;margin-bottom:16px}.scan input{flex:1}.line-table{min-width:900px}.line-table input,.line-table select{width:100%;padding:7px}.summary{margin:16px 0 0 auto;width:min(360px,100%)}.summary div{display:flex;justify-content:space-between;padding:7px 0}.summary .net{font-size:19px;font-weight:900;border-top:2px solid var(--text);margin-top:5px;padding-top:12px}
+.tax-grid{display:flex;gap:20px;flex-wrap:wrap;margin-top:15px}.check{display:flex;align-items:center;gap:8px}.check input{width:auto}
+.toast{position:fixed;right:22px;bottom:22px;background:#111827;color:#fff;padding:13px 16px;border-radius:9px;display:none;z-index:100}.toast.show{display:block}
+.print-area{display:none}
+@media(max-width:1200px){.cards{grid-template-columns:repeat(3,1fr)}.form-grid{grid-template-columns:repeat(2,1fr)}.invoice-meta{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.sidebar{width:70px;padding:15px 7px}.logo{font-size:0;padding:8px 10px 20px}.logo span{font-size:20px}.nav button{font-size:0;text-align:center}.nav button::first-letter{font-size:20px}.main{margin-left:70px;width:calc(100% - 70px);padding:14px}.cards{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}.invoice-meta{grid-template-columns:1fr}.top{align-items:flex-start;gap:10px}.top .btn{padding:9px}.panel-body{padding:12px}}
+@media print{body>*{display:none!important}.print-area{display:block!important;padding:30px;font-family:Arial}.print-area table{min-width:0}.print-area th,.print-area td{border:1px solid #bbb}.print-area .print-summary{width:340px;margin-left:auto}.print-area h1{text-align:center}}
+
+.party-tabs{display:flex;gap:8px;margin-bottom:15px}.party-tabs button.active{background:#2563eb;color:#fff}
+.stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.mini{background:#f8fafc;border:1px solid #e5e7eb;padding:13px;border-radius:9px}.mini b{display:block;font-size:18px;margin-top:4px}
+.alert{padding:12px 14px;border-radius:9px;background:#fff7ed;color:#9a3412;margin-bottom:14px}.successbox{padding:12px 14px;border-radius:9px;background:#ecfdf5;color:#047857}
+@media(max-width:900px){.stat-strip{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="logo">STOCK<span>FLOW</span> PRO</div>
+  <nav class="nav">
+    <button class="active" data-page="dashboard">▦ Dashboard</button>
+    <button data-page="products">▣ Products</button>
+    <button data-page="stock">▤ Current Stock</button>
+    <button data-page="invoices">▧ Invoice History</button>
+    <button data-page="ledger">≡ Stock Ledger</button>
+    <button data-page="reports">◫ Reports</button>
+    <button data-page="warehouses">▥ Warehouses</button>
+    <button data-page="adjustments">± Adjustments</button>
+    <button data-page="counts">☷ Stock Count</button>
+    <button data-page="partners">♙ Parties</button>
+    <button data-page="expenses">₨ Expenses</button>
+    <button data-page="payments">₿ Payments</button>
+    <button data-page="cheques">▣ Cheques</button>
+    <button data-page="labels">▤ Labels</button>
+    <button data-page="audit">⌕ Audit Trail</button>
+    <button data-page="backup">⇩ Backup</button>
+    <button data-page="settings">⚙ Settings</button>
+  </nav>
+</aside>
+<main class="main">
+<section id="dashboard" class="page active">
+  <div class="top"><div><h1>Dashboard</h1><p>Real-time inventory overview</p></div><button class="btn btn-primary" onclick="openInvoice('IN')">+ Stock IN</button></div>
+  <div class="cards">
+    <div class="card"><div class="label">TOTAL PRODUCTS</div><div class="value" id="dProducts">0</div></div>
+    <div class="card"><div class="label">STOCK VALUE</div><div class="value" id="dValue">PKR 0.00</div></div>
+    <div class="card"><div class="label">TODAY'S IN</div><div class="value" id="dIn">PKR 0.00</div></div>
+    <div class="card"><div class="label">TODAY'S OUT</div><div class="value" id="dOut">PKR 0.00</div></div>
+    <div class="card"><div class="label">LOW STOCK</div><div class="value" id="dLow">0</div></div>
+    <div class="card"><div class="label">OUT OF STOCK</div><div class="value" id="dOutStock">0</div></div>
+  </div>
+  <div class="panel"><div class="panel-head"><h2>Recent Invoices</h2><button class="btn btn-light" onclick="showPage('invoices')">View All</button></div><div class="table-wrap"><table><thead><tr><th>Invoice</th><th>Date</th><th>Type</th><th>Party</th><th class="num">Gross</th><th class="num">Net</th></tr></thead><tbody id="recentInvoices"></tbody></table></div></div>
+</section>
+
+<section id="products" class="page">
+ <div class="top"><div><h1>Product Management</h1><p>Manage products, barcodes and pricing</p></div><button class="btn btn-primary" onclick="openProduct()">+ Add Product</button></div>
+ <div class="panel"><div class="panel-head"><h2>Products</h2><input id="productSearch" placeholder="Search product / SKU / barcode" oninput="renderProducts()"></div><div class="table-wrap"><table><thead><tr><th>SKU</th><th>Barcode</th><th>Product</th><th>Category</th><th>Unit</th><th class="num">Cost</th><th class="num">Retail</th><th class="num">Opening</th><th>Min</th><th>Actions</th></tr></thead><tbody id="productRows"></tbody></table></div></div>
+</section>
+
+<section id="stock" class="page">
+ <div class="top"><div><h1>Current Stock</h1><p>Live inventory balances</p></div><div class="toolbar"><button class="btn btn-primary" onclick="openInvoice('IN')">+ Stock IN</button><button class="btn btn-light" onclick="openInvoice('OUT')">+ Stock OUT</button></div></div>
+ <div class="panel"><div class="panel-head"><h2>Stock Position</h2><input id="stockSearch" placeholder="Search..." oninput="renderStock()"></div><div class="table-wrap"><table><thead><tr><th>SKU</th><th>Barcode</th><th>Product</th><th>Category</th><th class="num">Opening</th><th class="num">IN</th><th class="num">OUT</th><th class="num">Current</th><th>Min</th><th>Status</th><th class="num">Stock Value</th></tr></thead><tbody id="stockRows"></tbody></table></div></div>
+</section>
+
+<section id="invoices" class="page">
+ <div class="top"><div><h1>Invoice History</h1><p>Complete Stock IN / Stock OUT records</p></div><div class="toolbar"><button class="btn btn-primary" onclick="openInvoice('IN')">+ Stock IN</button><button class="btn btn-light" onclick="openInvoice('OUT')">+ Stock OUT</button></div></div>
+ <div class="panel"><div class="panel-head"><h2>Invoices</h2><div class="toolbar"><input id="invoiceSearch" placeholder="Search invoice / party" oninput="renderInvoices()"><input type="date" id="invoiceDate" onchange="renderInvoices()"></div></div><div class="table-wrap"><table><thead><tr><th>Invoice No.</th><th>Date</th><th>Type</th><th>Party</th><th>Items</th><th class="num">Gross</th><th class="num">GST</th><th class="num">Adv. Tax</th><th class="num">Net</th><th>Actions</th></tr></thead><tbody id="invoiceRows"></tbody></table></div></div>
+</section>
+
+<section id="ledger" class="page">
+ <div class="top"><div><h1>Stock Ledger</h1><p>Product movement and running balance</p></div></div>
+ <div class="panel"><div class="panel-head"><h2>Ledger</h2><div class="toolbar"><input id="ledgerSearch" placeholder="Search..." oninput="renderLedger()"><button class="btn btn-light" onclick="exportCSV('ledger')">Export CSV</button></div></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Invoice</th><th>Product</th><th>Type</th><th>Party</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Gross</th><th class="num">GST</th><th class="num">Adv. Tax</th><th class="num">Net</th><th class="num">Balance</th></tr></thead><tbody id="ledgerRows"></tbody></table></div></div>
+</section>
+
+<section id="reports" class="page">
+ <div class="top"><div><h1>Reports</h1><p>Real data from your inventory</p></div><button class="btn btn-light" onclick="exportCSV('invoices')">Export Invoice CSV</button></div>
+ <div class="panel"><div class="panel-head"><h2>Report Filters</h2></div><div class="panel-body form-grid"><div class="field"><label>From</label><input type="date" id="rFrom" onchange="renderReport()"></div><div class="field"><label>To</label><input type="date" id="rTo" onchange="renderReport()"></div><div class="field"><label>Type</label><select id="rType" onchange="renderReport()"><option value="">All</option><option>IN</option><option>OUT</option></select></div></div></div>
+ <div class="panel"><div class="panel-head"><h2>Invoice Report</h2></div><div class="table-wrap"><table><thead><tr><th>Invoice</th><th>Date</th><th>Type</th><th>Party</th><th class="num">Gross</th><th class="num">GST</th><th class="num">Adv. Tax</th><th class="num">Net</th></tr></thead><tbody id="reportRows"></tbody></table></div></div>
+</section>
+
+
+<section id="warehouses" class="page">
+ <div class="top"><div><h1>Warehouse Management</h1><p>Warehouses, racks, shelves, bins and stock transfers</p></div><button class="btn btn-primary" onclick="addWarehouse()">+ Add Warehouse</button></div>
+ <div class="panel"><div class="panel-head"><h2>Locations</h2></div><div class="table-wrap"><table><thead><tr><th>Warehouse</th><th>Code</th><th>Location</th><th>Manager</th><th>Rack / Shelf / Bin</th><th>Status</th></tr></thead><tbody id="warehouseRows"></tbody></table></div></div>
+ <div class="panel"><div class="panel-head"><h2>Stock Transfer</h2></div><div class="panel-body"><div class="form-grid"><div class="field"><label>Product</label><select id="transferProduct"></select></div><div class="field"><label>From</label><select id="transferFrom"></select></div><div class="field"><label>To</label><select id="transferTo"></select></div><div class="field"><label>Quantity</label><input id="transferQty" type="number" min="0.01" step="0.01"></div></div><br><button class="btn btn-primary" onclick="transferStock()">Transfer Stock</button></div></div>
+</section>
+
+<section id="adjustments" class="page">
+ <div class="top"><div><h1>Stock Adjustments</h1><p>Controlled corrections for damage, loss, physical count and other variances</p></div><button class="btn btn-primary" onclick="openAdjustment()">+ New Adjustment</button></div>
+ <div class="panel"><div class="panel-head"><h2>Adjustment History</h2></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Reference</th><th>Product</th><th>Type</th><th>Qty</th><th>Reason</th><th>Approved By</th></tr></thead><tbody id="adjustmentRows"></tbody></table></div></div>
+</section>
+
+<section id="counts" class="page">
+ <div class="top"><div><h1>Physical Stock Count</h1><p>Compare system stock with actual physical count</p></div><button class="btn btn-primary" onclick="startStockCount()">Start Count</button></div>
+ <div class="panel"><div class="panel-head"><h2>Stock Count</h2><button class="btn btn-light" onclick="saveStockCount()">Save Count</button></div><div class="table-wrap"><table><thead><tr><th>SKU</th><th>Product</th><th>System Qty</th><th>Physical Qty</th><th>Variance</th><th>Reason</th></tr></thead><tbody id="countRows"></tbody></table></div></div>
+</section>
+
+<section id="partners" class="page">
+ <div class="top"><div><h1>Customers & Suppliers</h1><p>Party master and running balances</p></div><button class="btn btn-primary" onclick="addParty()">+ Add Party</button></div>
+ <div class="panel"><div class="panel-head"><h2>Parties</h2><div class="party-tabs"><button class="btn btn-light active" onclick="partyFilter='ALL';renderParties()">All</button><button class="btn btn-light" onclick="partyFilter='CUSTOMER';renderParties()">Customers</button><button class="btn btn-light" onclick="partyFilter='SUPPLIER';renderParties()">Suppliers</button></div></div><div class="table-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Type</th><th>Company</th><th>Phone</th><th>Credit Limit</th><th>Balance</th></tr></thead><tbody id="partyRows"></tbody></table></div></div>
+</section>
+
+<section id="expenses" class="page">
+ <div class="top"><div><h1>Expense Management</h1><p>Track daily business expenses</p></div><button class="btn btn-primary" onclick="addExpense()">+ Add Expense</button></div>
+ <div class="panel"><div class="panel-head"><h2>Expenses</h2></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Date</th><th>Category</th><th>Description</th><th>Paid To</th><th>Method</th><th class="num">Amount</th><th>Approved By</th></tr></thead><tbody id="expenseRows"></tbody></table></div></div>
+</section>
+
+<section id="payments" class="page">
+ <div class="top"><div><h1>Payments & Cashbook</h1><p>Cash, bank, digital payments and account transfers</p></div><button class="btn btn-primary" onclick="addPayment()">+ Add Payment</button></div>
+ <div class="stat-strip"><div class="mini">Cash In<b id="cashIn">PKR 0.00</b></div><div class="mini">Cash Out<b id="cashOut">PKR 0.00</b></div><div class="mini">Net Cash<b id="netCash">PKR 0.00</b></div><div class="mini">Transactions<b id="paymentCount">0</b></div></div>
+ <div class="panel"><div class="panel-head"><h2>Cashbook</h2></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Reference</th><th>Party</th><th>Type</th><th>Account</th><th>Method</th><th class="num">Amount</th><th>Cheque</th></tr></thead><tbody id="paymentRows"></tbody></table></div></div>
+</section>
+
+<section id="cheques" class="page">
+ <div class="top"><div><h1>Cheque Management</h1><p>Issue, receive, deposit, clear and track cheque status</p></div><button class="btn btn-primary" onclick="addCheque()">+ Add Cheque</button></div>
+ <div class="panel"><div class="panel-head"><h2>Cheque Register</h2><div class="toolbar"><select id="chequeStatus" onchange="renderCheques()"><option value="">All Status</option><option>Issued</option><option>Received</option><option>Deposited</option><option>Cleared</option><option>Bounced</option><option>Cancelled</option></select></div></div><div class="table-wrap"><table><thead><tr><th>Cheque No.</th><th>Date</th><th>Party</th><th>Bank</th><th>Type</th><th>Account</th><th>Due Date</th><th class="num">Amount</th><th>Status</th><th>Actions</th></tr></thead><tbody id="chequeRows"></tbody></table></div></div>
+</section>
+
+<section id="labels" class="page">
+ <div class="top"><div><h1>Barcode & QR Labels</h1><p>Generate printable product labels</p></div><button class="btn btn-primary" onclick="printLabels()">PRINT LABELS</button></div>
+ <div class="panel"><div class="panel-head"><h2>Products</h2></div><div class="table-wrap"><table><thead><tr><th>Select</th><th>SKU</th><th>Product</th><th>Barcode</th><th>Retail</th><th>Label Qty</th></tr></thead><tbody id="labelRows"></tbody></table></div></div>
+</section>
+
+<section id="audit" class="page">
+ <div class="top"><div><h1>Audit Trail</h1><p>Track important system activity and changes</p></div></div>
+ <div class="panel"><div class="panel-head"><h2>Activity Log</h2></div><div class="table-wrap"><table><thead><tr><th>Date / Time</th><th>User</th><th>Action</th><th>Reference</th><th>Details</th></tr></thead><tbody id="auditRows"></tbody></table></div></div>
+</section>
+
+<section id="backup" class="page">
+ <div class="top"><div><h1>Backup & Restore</h1><p>Protect and restore your StockFlow Pro data</p></div></div>
+ <div class="panel"><div class="panel-head"><h2>Database Backup</h2></div><div class="panel-body"><button class="btn btn-primary" onclick="backupData()">DOWNLOAD FULL BACKUP</button> <button class="btn btn-light" onclick="$('restoreFile').click()">RESTORE BACKUP</button><input id="restoreFile" type="file" accept=".json" style="display:none" onchange="restoreData(event)"><p class="muted">Backup contains products, invoices, warehouses, parties, expenses, payments, cheques, adjustments, counts, settings and audit records.</p></div></div>
+</section>
+
+<section id="settings" class="page">
+ <div class="top"><div><h1>Settings</h1><p>Application configuration and data controls</p></div></div>
+ <div class="panel"><div class="panel-head"><h2>Business Settings</h2></div><div class="panel-body form-grid">
+   <div class="field"><label>Business Name</label><input id="sBusiness"></div>
+   <div class="field"><label>Currency</label><input id="sCurrency"></div>
+   <div class="field"><label>Default GST %</label><input id="sGST" type="number" min="0" max="100"></div>
+   <div class="field"><label>Default Advance Tax %</label><input id="sAdv" type="number" min="0" max="100"></div>
+ </div><div class="panel-body"><button class="btn btn-primary" onclick="saveSettings()">Save Settings</button></div></div>
+ <div class="panel"><div class="panel-head"><h2>Danger Zone</h2></div><div class="panel-body"><p style="color:#b91c1c">Permanently deletes all products, invoices, stock movements and application data.</p><button class="btn btn-danger" onclick="resetData()">Reset All Data</button></div></div>
+</section>
+</main>
+</div>
+
+<div class="modal" id="productModal"><div class="modal-box"><div class="modal-head"><h2 id="productModalTitle">Add Product</h2><button class="close" onclick="closeModal('productModal')">×</button></div><div class="modal-body"><div class="form-grid">
+<div class="field"><label>SKU / Product Code *</label><input id="pSku"></div><div class="field"><label>Barcode *</label><input id="pBarcode"></div><div class="field"><label>Product Name *</label><input id="pName"></div><div class="field"><label>Category</label><input id="pCategory"></div>
+<div class="field"><label>Unit</label><select id="pUnit"><option>PCS</option><option>BOX</option><option>KG</option><option>LITER</option><option>PACK</option><option>SET</option><option>METER</option><option>DOZEN</option></select></div>
+<div class="field"><label>Cost Price *</label><input id="pCost" type="number" min="0" step="0.01"></div><div class="field"><label>Retail Price *</label><input id="pRetail" type="number" min="0" step="0.01"></div><div class="field"><label>Wholesale Price</label><input id="pWholesale" type="number" min="0" step="0.01"></div>
+<div class="field"><label>Opening Stock</label><input id="pOpening" type="number" min="0" step="0.01"></div><div class="field"><label>Minimum Stock</label><input id="pMin" type="number" min="0" step="0.01"></div>
+</div></div><div class="modal-foot"><button class="btn btn-light" onclick="closeModal('productModal')">Cancel</button><button class="btn btn-primary" onclick="saveProduct()">Save Product</button></div></div></div>
+
+<div class="modal" id="invoiceModal"><div class="modal-box"><div class="modal-head"><h2 id="invoiceTitle">New Stock IN Invoice</h2><button class="close" onclick="closeModal('invoiceModal')">×</button></div><div class="modal-body">
+<div class="invoice-meta"><div class="field"><label>Date *</label><input id="iDate" type="date"></div><div class="field"><label>Invoice / Reference No.</label><input id="iNo" placeholder="Auto-generated"></div><div class="field"><label id="partyLabel">Vendor</label><input id="iParty"></div><div class="field"><label id="userLabel">Received By</label><input id="iUser" value="Admin"></div></div>
+<div class="scan"><input id="barcodeInput" placeholder="Scan barcode or enter SKU, then press Enter" autocomplete="off"><button class="btn btn-primary" onclick="scanBarcode()">SCAN</button></div>
+<div class="panel" style="margin:0"><div class="panel-head"><h2>Items</h2><button class="btn btn-light" onclick="addInvoiceLine()">+ Add Product</button></div><div class="table-wrap"><table class="line-table"><thead><tr><th>#</th><th>Product</th><th>SKU</th><th>Barcode</th><th>Qty</th><th>Rate</th><th>Gross</th><th>Action</th></tr></thead><tbody id="lineRows"></tbody></table></div></div>
+<div class="tax-grid"><label class="check"><input type="checkbox" id="gstEnabled" onchange="calculateInvoice()"> GST / Sales Tax <input id="gstPct" type="number" min="0" max="100" step="0.01" style="width:90px" oninput="calculateInvoice()"></label><label class="check"><input type="checkbox" id="advEnabled" onchange="calculateInvoice()"> Advance Tax <input id="advPct" type="number" min="0" max="100" step="0.01" style="width:90px" oninput="calculateInvoice()"></label></div>
+<div class="field" style="margin-top:15px"><label>Remarks</label><textarea id="iRemarks" rows="2" placeholder="Optional remarks"></textarea></div>
+<div class="summary"><div><span>Gross Value</span><strong id="sumGross">PKR 0.00</strong></div><div><span id="gstLabel">GST (0%)</span><strong id="sumGST">PKR 0.00</strong></div><div><span id="advLabel">Advance Tax (0%)</span><strong id="sumAdv">PKR 0.00</strong></div><div class="net"><span>NET VALUE</span><strong id="sumNet">PKR 0.00</strong></div></div>
+</div><div class="modal-foot"><button class="btn btn-light" onclick="closeModal('invoiceModal')">Cancel</button><button class="btn btn-primary" onclick="saveInvoice()">SAVE INVOICE</button></div></div></div>
+
+<div class="modal" id="viewModal"><div class="modal-box"><div class="modal-head"><h2>Invoice</h2><button class="close" onclick="closeModal('viewModal')">×</button></div><div class="modal-body" id="viewBody"></div><div class="modal-foot"><button class="btn btn-light" onclick="printCurrent()">PRINT / PDF</button><button class="btn btn-primary" onclick="closeModal('viewModal')">Close</button></div></div></div>
+<div class="print-area" id="printArea"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY='stockflow_pro_v1';
+let data=JSON.parse(localStorage.getItem(KEY)||'null')||{products:[],invoices:[],settings:{business:'StockFlow Pro',currency:'PKR',gst:18,adv:2}};
+data.warehouses=data.warehouses||[{id:crypto.randomUUID(),name:'Main Warehouse',code:'WH-01',location:'',manager:'',rack:'',shelf:'',bin:'',status:'Active'}];
+data.adjustments=data.adjustments||[];data.counts=data.counts||[];data.parties=data.parties||[];data.expenses=data.expenses||[];data.payments=data.payments||[];data.cheques=data.cheques||[];data.audit=data.audit||[];data.labels=data.labels||{};
+let editingProduct=null, invoiceType='IN', invoiceLines=[], currentInvoice=null;
+
+const $=id=>document.getElementById(id);
+const money=n=>(data.settings.currency||'PKR')+' '+Number(n||0).toLocaleString('en-PK',{minimumFractionDigits:2,maximumFractionDigits:2});
+const today=()=>new Date().toISOString().slice(0,10);
+function save(){localStorage.setItem(KEY,JSON.stringify(data));}
+function toast(msg){$('toast').textContent=msg;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2400)}
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));renderAll()}
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>showPage(b.dataset.page));
+function closeModal(id){$(id).classList.remove('show')}
+function currentStock(p){
+ let ins=0,outs=0;
+ data.invoices.forEach(inv=>inv.lines.forEach(l=>{if(l.productId===p.id){if(inv.type==='IN')ins+=Number(l.qty);else outs+=Number(l.qty)}}));
+ return {ins,outs,current:Number(p.opening||0)+ins-outs};
+}
+function renderAll(){renderDashboard();renderProducts();renderStock();renderInvoices();renderLedger();renderReport();loadSettings();renderWarehouses();renderAdjustments();renderCountRows();renderParties();renderExpenses();renderPayments();renderCheques();renderLabels();renderAudit()}
+function renderDashboard(){
+ let vals=data.products.map(p=>({p,s:currentStock(p)}));let low=vals.filter(x=>x.s.current>0&&x.s.current<=Number(x.p.min||0)).length,out=vals.filter(x=>x.s.current<=0).length;
+ $('dProducts').textContent=data.products.length;$('dValue').textContent=money(vals.reduce((a,x)=>a+x.s.current*Number(x.p.cost||0),0));$('dLow').textContent=low;$('dOutStock').textContent=out;
+ let ins=0,outs=0;data.invoices.filter(i=>i.date===today()).forEach(i=>i.type==='IN'?ins+=i.gross:outs+=i.gross);$('dIn').textContent=money(ins);$('dOut').textContent=money(outs);
+ let rows=data.invoices.slice().sort((a,b)=>(b.created||'').localeCompare(a.created||'')).slice(0,8);
+ $('recentInvoices').innerHTML=rows.length?rows.map(i=>`<tr><td>${esc(i.no)}</td><td>${i.date}</td><td><span class="badge ${i.type==='IN'?'green':'blue'}">${i.type}</span></td><td>${esc(i.party||'—')}</td><td class="num">${money(i.gross)}</td><td class="num">${money(i.net)}</td></tr>`).join(''):`<tr><td colspan="6" class="empty">No records found</td></tr>`;
+}
+function renderProducts(){
+ let q=($('productSearch')?.value||'').toLowerCase();let ps=data.products.filter(p=>(p.name+p.sku+p.barcode).toLowerCase().includes(q));
+ $('productRows').innerHTML=ps.length?ps.map(p=>`<tr><td>${esc(p.sku)}</td><td>${esc(p.barcode)}</td><td><strong>${esc(p.name)}</strong></td><td>${esc(p.category||'—')}</td><td>${p.unit}</td><td class="num">${money(p.cost)}</td><td class="num">${money(p.retail)}</td><td class="num">${p.opening}</td><td>${p.min}</td><td><button class="btn btn-light" onclick="openProduct('${p.id}')">Edit</button> <button class="btn btn-danger" onclick="deleteProduct('${p.id}')">Delete</button></td></tr>`).join(''):`<tr><td colspan="10" class="empty">No products found.</td></tr>`;
+}
+function renderStock(){
+ let q=($('stockSearch')?.value||'').toLowerCase();let ps=data.products.filter(p=>(p.name+p.sku+p.barcode).toLowerCase().includes(q));
+ $('stockRows').innerHTML=ps.length?ps.map(p=>{let s=currentStock(p),status=s.current<=0?['OUT OF STOCK','red']:s.current<=Number(p.min||0)?['LOW STOCK','yellow']:['IN STOCK','green'];return `<tr><td>${esc(p.sku)}</td><td>${esc(p.barcode)}</td><td><strong>${esc(p.name)}</strong></td><td>${esc(p.category||'—')}</td><td class="num">${p.opening}</td><td class="num">${s.ins}</td><td class="num">${s.outs}</td><td class="num"><strong>${s.current}</strong></td><td>${p.min}</td><td><span class="badge ${status[1]}">${status[0]}</span></td><td class="num">${money(s.current*Number(p.cost||0))}</td></tr>`}).join(''):`<tr><td colspan="11" class="empty">No products found.</td></tr>`;
+}
+function renderInvoices(){
+ let q=($('invoiceSearch')?.value||'').toLowerCase(),d=$('invoiceDate')?.value||'';let a=data.invoices.filter(i=>(!d||i.date===d)&&(`${i.no} ${i.party||''} ${i.type}`).toLowerCase().includes(q)).sort((x,y)=>(y.created||'').localeCompare(x.created||''));
+ $('invoiceRows').innerHTML=a.length?a.map(i=>`<tr><td><strong>${esc(i.no)}</strong></td><td>${i.date}</td><td><span class="badge ${i.type==='IN'?'green':'blue'}">${i.type}</span></td><td>${esc(i.party||'—')}</td><td>${i.lines.length}</td><td class="num">${money(i.gross)}</td><td class="num">${money(i.gst)}</td><td class="num">${money(i.adv)}</td><td class="num"><strong>${money(i.net)}</strong></td><td><button class="btn btn-light" onclick="viewInvoice('${i.id}')">VIEW</button> <button class="btn btn-light" onclick="printInvoice('${i.id}')">PRINT</button> <button class="btn btn-danger" onclick="deleteInvoice('${i.id}')">DELETE</button></td></tr>`).join(''):`<tr><td colspan="10" class="empty">No records found.</td></tr>`;
+}
+function renderLedger(){
+ let q=($('ledgerSearch')?.value||'').toLowerCase(),rows=[];data.products.forEach(p=>{let bal=Number(p.opening||0);let invs=data.invoices.slice().sort((a,b)=>(a.date+a.created).localeCompare(b.date+b.created));invs.forEach(i=>i.lines.forEach(l=>{if(l.productId===p.id){let qty=Number(l.qty);bal+=i.type==='IN'?qty:-qty;rows.push({i,p,l,bal})}}))});
+ rows=rows.filter(x=>(`${x.i.no} ${x.p.name} ${x.p.sku} ${x.i.party||''}`).toLowerCase().includes(q));
+ $('ledgerRows').innerHTML=rows.length?rows.map(x=>`<tr><td>${x.i.date}</td><td>${esc(x.i.no)}</td><td>${esc(x.p.name)}</td><td><span class="badge ${x.i.type==='IN'?'green':'blue'}">${x.i.type}</span></td><td>${esc(x.i.party||'—')}</td><td class="num">${x.i.type==='IN'?'+':''}${x.l.qty}</td><td class="num">${money(x.l.rate)}</td><td class="num">${money(x.l.gross)}</td><td class="num">${money(x.l.gst)}</td><td class="num">${money(x.l.adv)}</td><td class="num">${money(x.l.net)}</td><td class="num"><strong>${x.bal}</strong></td></tr>`).join(''):`<tr><td colspan="12" class="empty">No records found.</td></tr>`;
+}
+function renderReport(){
+ let f=$('rFrom')?.value||'',t=$('rTo')?.value||'',ty=$('rType')?.value||'';let a=data.invoices.filter(i=>(!f||i.date>=f)&&(!t||i.date<=t)&&(!ty||i.type===ty));
+ $('reportRows').innerHTML=a.length?a.map(i=>`<tr><td>${esc(i.no)}</td><td>${i.date}</td><td>${i.type}</td><td>${esc(i.party||'—')}</td><td class="num">${money(i.gross)}</td><td class="num">${money(i.gst)}</td><td class="num">${money(i.adv)}</td><td class="num">${money(i.net)}</td></tr>`).join(''):`<tr><td colspan="8" class="empty">No data available.</td></tr>`;
+}
+function openProduct(id=null){editingProduct=id;$('productModalTitle').textContent=id?'Edit Product':'Add Product';let p=id?data.products.find(x=>x.id===id):{unit:'PCS',opening:0,min:0,cost:0,retail:0,wholesale:0};['sku','barcode','name','category'].forEach(k=>$('p'+k[0].toUpperCase()+k.slice(1)).value=p[k]||'');$('pUnit').value=p.unit||'PCS';$('pCost').value=p.cost??'';$('pRetail').value=p.retail??'';$('pWholesale').value=p.wholesale??'';$('pOpening').value=p.opening??0;$('pMin').value=p.min??0;$('productModal').classList.add('show')}
+function saveProduct(){
+ let sku=$('pSku').value.trim(),barcode=$('pBarcode').value.trim(),name=$('pName').value.trim();if(!sku||!barcode||!name)return toast('SKU, barcode and product name are required.');
+ if(data.products.some(p=>(p.sku.toLowerCase()===sku.toLowerCase()||p.barcode===barcode)&&p.id!==editingProduct))return toast('Duplicate SKU or barcode.');
+ let obj={id:editingProduct||crypto.randomUUID(),sku,barcode,name,category:$('pCategory').value.trim(),unit:$('pUnit').value,cost:+$('pCost').value||0,retail:+$('pRetail').value||0,wholesale:+$('pWholesale').value||0,opening:+$('pOpening').value||0,min:+$('pMin').value||0};
+ if(editingProduct){let i=data.products.findIndex(p=>p.id===editingProduct);data.products[i]=obj}else data.products.push(obj);save();closeModal('productModal');renderAll();toast('Product saved successfully.')}
+function deleteProduct(id){if(data.invoices.some(i=>i.lines.some(l=>l.productId===id)))return toast('Cannot delete a product used in an invoice.');if(confirm('Delete this product?')){data.products=data.products.filter(p=>p.id!==id);save();renderAll();toast('Product deleted.')}}
+function nextInvoiceNo(){let nums=data.invoices.map(i=>+(String(i.no).match(/(\d+)$/)||[0,0])[1]);return 'INV-'+String(Math.max(0,...nums)+1).padStart(4,'0')}
+function openInvoice(type){
+ invoiceType=type;invoiceLines=[];$('invoiceTitle').textContent=`New Stock ${type} Invoice`;$('iDate').value=today();$('iNo').value=nextInvoiceNo();$('iParty').value='';$('iUser').value='Admin';$('iRemarks').value='';$('partyLabel').textContent=type==='IN'?'Vendor':'Customer / Department';$('userLabel').textContent=type==='IN'?'Received By':'Issued By';$('gstEnabled').checked=false;$('advEnabled').checked=false;$('gstPct').value=data.settings.gst||0;$('advPct').value=data.settings.adv||0;renderLines();$('invoiceModal').classList.add('show');setTimeout(()=>$('barcodeInput').focus(),150)}
+function addInvoiceLine(productId=null){
+ if(!data.products.length)return toast('Add products in Product Management first.');
+ let p=productId?data.products.find(x=>x.id===productId):data.products[0];if(!p)return;
+ invoiceLines.push({productId:p.id,qty:1,rate:invoiceType==='IN'?Number(p.cost):Number(p.retail)});renderLines()
+}
+function scanBarcode(){
+ let code=$('barcodeInput').value.trim();if(!code)return;let p=data.products.find(x=>x.barcode===code||x.sku.toLowerCase()===code.toLowerCase());
+ if(!p){toast('Product not found. Add this barcode to Product Management first.');return}
+ let line=invoiceLines.find(x=>x.productId===p.id);if(line)line.qty=Number(line.qty)+1;else invoiceLines.push({productId:p.id,qty:1,rate:invoiceType==='IN'?Number(p.cost):Number(p.retail)});$('barcodeInput').value='';renderLines()
+}
+$('barcodeInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();scanBarcode()}})
+function renderLines(){
+ $('lineRows').innerHTML=invoiceLines.length?invoiceLines.map((l,idx)=>{let p=data.products.find(x=>x.id===l.productId);return `<tr><td>${idx+1}</td><td><select onchange="changeLineProduct(${idx},this.value)">${data.products.map(p=>`<option value="${p.id}" ${p.id===l.productId?'selected':''}>${esc(p.name)}</option>`).join('')}</select></td><td>${esc(p.sku)}</td><td>${esc(p.barcode)}</td><td><input type="number" min="0.01" step="0.01" value="${l.qty}" onchange="changeQty(${idx},this.value)"></td><td><input type="number" min="0" step="0.01" value="${l.rate}" onchange="changeRate(${idx},this.value)"></td><td class="num">${money(l.qty*l.rate)}</td><td><button class="btn btn-danger" onclick="removeLine(${idx})">Remove</button></td></tr>`}).join(''):`<tr><td colspan="8" class="empty">No products added. Scan a barcode or click + Add Product.</td></tr>`;calculateInvoice()
+}
+function changeLineProduct(i,id){let p=data.products.find(x=>x.id===id);invoiceLines[i].productId=id;invoiceLines[i].rate=invoiceType==='IN'?p.cost:p.retail;renderLines()}
+function changeQty(i,v){invoiceLines[i].qty=+v;renderLines()}function changeRate(i,v){invoiceLines[i].rate=+v;renderLines()}function removeLine(i){invoiceLines.splice(i,1);renderLines()}
+function calculateInvoice(){
+ let gross=invoiceLines.reduce((a,l)=>a+Number(l.qty)*Number(l.rate),0),gp=$('gstEnabled').checked?Math.max(0,Math.min(100,+$('gstPct').value||0)):0,ap=$('advEnabled').checked?Math.max(0,Math.min(100,+$('advPct').value||0)):0,gst=gross*gp/100,adv=gross*ap/100;
+ $('sumGross').textContent=money(gross);$('sumGST').textContent=money(gst);$('sumAdv').textContent=money(adv);$('sumNet').textContent=money(gross+gst+adv);$('gstLabel').textContent=`GST (${gp}%)`;$('advLabel').textContent=`Advance Tax (${ap}%)`
+}
+function saveInvoice(){
+ if(!invoiceLines.length)return toast('Invoice must contain at least one product.');
+ for(let l of invoiceLines){if(l.qty<=0||l.rate<0)return toast('Quantity and rate must be valid.');if(invoiceType==='OUT'){let p=data.products.find(x=>x.id===l.productId),s=currentStock(p);if(l.qty>s.current)return toast(`Insufficient stock for ${p.name}. Available quantity: ${s.current}`)}}
+ let gross=invoiceLines.reduce((a,l)=>a+l.qty*l.rate,0),gp=$('gstEnabled').checked?+$('gstPct').value||0:0,ap=$('advEnabled').checked?+$('advPct').value||0:0,gst=gross*gp/100,adv=gross*ap/100;
+ let inv={id:crypto.randomUUID(),no:$('iNo').value.trim()||nextInvoiceNo(),date:$('iDate').value||today(),type:invoiceType,party:$('iParty').value.trim(),user:$('iUser').value.trim(),remarks:$('iRemarks').value.trim(),gstPct:gp,advPct:ap,gross,gst,adv,net:gross+gst+adv,created:new Date().toISOString(),lines:invoiceLines.map(l=>{let p=data.products.find(x=>x.id===l.productId),lg=l.qty*l.rate,gg=lg*gp/100,aa=lg*ap/100;return {productId:p.id,sku:p.sku,barcode:p.barcode,product:p.name,qty:+l.qty,rate:+l.rate,gross:lg,gst:gg,adv:aa,net:lg+gg+aa}})};
+ if(data.invoices.some(i=>i.no===inv.no))return toast('Invoice number already exists.');
+ data.invoices.push(inv);save();closeModal('invoiceModal');renderAll();toast('Invoice saved successfully.');viewInvoice(inv.id)
+}
+function viewInvoice(id){let i=data.invoices.find(x=>x.id===id);if(!i)return;currentInvoice=i;$('viewBody').innerHTML=invoiceHTML(i);$('viewModal').classList.add('show')}
+function invoiceHTML(i){return `<div style="display:flex;justify-content:space-between;margin-bottom:20px"><div><h2 style="margin:0">${esc(data.settings.business)}</h2><p>STOCK ${i.type==='IN'?'IN':'OUT'} INVOICE</p></div><div><strong>${esc(i.no)}</strong><br>${i.date}</div></div><p><strong>${i.type==='IN'?'Vendor':'Customer / Department'}:</strong> ${esc(i.party||'—')} &nbsp; <strong>${i.type==='IN'?'Received':'Issued'} By:</strong> ${esc(i.user||'—')}</p><div class="table-wrap"><table><thead><tr><th>#</th><th>SKU</th><th>PRODUCT</th><th class="num">QTY</th><th class="num">RATE</th><th class="num">GROSS</th></tr></thead><tbody>${i.lines.map((l,n)=>`<tr><td>${n+1}</td><td>${esc(l.sku)}</td><td>${esc(l.product)}</td><td class="num">${l.qty}</td><td class="num">${money(l.rate)}</td><td class="num">${money(l.gross)}</td></tr>`).join('')}</tbody></table></div><div class="summary"><div><span>Gross Value</span><strong>${money(i.gross)}</strong></div><div><span>GST (${i.gstPct}%)</span><strong>${money(i.gst)}</strong></div><div><span>Advance Tax (${i.advPct}%)</span><strong>${money(i.adv)}</strong></div><div class="net"><span>NET VALUE</span><strong>${money(i.net)}</strong></div></div><p><strong>Remarks:</strong> ${esc(i.remarks||'—')}</p>`}
+function printInvoice(id){let i=data.invoices.find(x=>x.id===id);if(!i)return;currentInvoice=i;printCurrent()}
+function printCurrent(){let i=currentInvoice;if(!i)return;$('printArea').innerHTML=`<h1>${esc(data.settings.business)}</h1><h2 style="text-align:center">STOCK ${i.type} INVOICE</h2><p><strong>Invoice No:</strong> ${esc(i.no)} &nbsp; <strong>Date:</strong> ${i.date}</p><p><strong>${i.type==='IN'?'Vendor':'Customer / Department'}:</strong> ${esc(i.party||'—')} &nbsp; <strong>${i.type==='IN'?'Received':'Issued'} By:</strong> ${esc(i.user||'—')}</p><table><thead><tr><th>#</th><th>SKU</th><th>PRODUCT</th><th>QTY</th><th>RATE</th><th>GROSS</th></tr></thead><tbody>${i.lines.map((l,n)=>`<tr><td>${n+1}</td><td>${esc(l.sku)}</td><td>${esc(l.product)}</td><td>${l.qty}</td><td>${money(l.rate)}</td><td>${money(l.gross)}</td></tr>`).join('')}</tbody></table><div class="print-summary"><p>Gross Value: <strong>${money(i.gross)}</strong></p><p>GST (${i.gstPct}%): <strong>${money(i.gst)}</strong></p><p>Advance Tax (${i.advPct}%): <strong>${money(i.adv)}</strong></p><h2>NET VALUE: ${money(i.net)}</h2></div><p>Remarks: ${esc(i.remarks||'—')}</p>`;window.print()}
+function deleteInvoice(id){if(!confirm('Are you sure you want to delete this entire invoice?'))return;data.invoices=data.invoices.filter(i=>i.id!==id);save();renderAll();toast('Entire invoice deleted. Stock recalculated.')}
+function loadSettings(){$('sBusiness').value=data.settings.business;$('sCurrency').value=data.settings.currency;$('sGST').value=data.settings.gst;$('sAdv').value=data.settings.adv}
+function saveSettings(){let g=+$('sGST').value||0,a=+$('sAdv').value||0;if(g>100||a>100)return toast('Tax percentages cannot exceed 100%.');data.settings={business:$('sBusiness').value.trim()||'StockFlow Pro',currency:$('sCurrency').value.trim()||'PKR',gst:g,adv:a};save();renderAll();toast('Settings saved.')}
+function resetData(){if(!confirm('WARNING: This will permanently delete all products, invoices, stock movements and application data. Continue?'))return;localStorage.removeItem(KEY);data={products:[],invoices:[],settings:{business:'StockFlow Pro',currency:'PKR',gst:18,adv:2},warehouses:[{id:crypto.randomUUID(),name:'Main Warehouse',code:'WH-01',location:'',manager:'',rack:'',shelf:'',bin:'',status:'Active'}],adjustments:[],counts:[],parties:[],expenses:[],payments:[],cheques:[],audit:[],labels:{}};renderAll();toast('All application data has been reset.')}
+function exportCSV(kind){let rows=[];if(kind==='invoices'){rows=[['Invoice','Date','Type','Party','Items','Gross','GST','Advance Tax','Net'],...data.invoices.map(i=>[i.no,i.date,i.type,i.party,i.lines.length,i.gross,i.gst,i.adv,i.net])]}else{rows=[['Date','Invoice','Product','Type','Party','Qty','Rate','Gross','GST','Advance Tax','Net','Balance']];data.products.forEach(p=>{let bal=p.opening;data.invoices.slice().sort((a,b)=>(a.date+a.created).localeCompare(b.date+b.created)).forEach(i=>i.lines.forEach(l=>{if(l.productId===p.id){bal+=i.type==='IN'?l.qty:-l.qty;rows.push([i.date,i.no,p.name,i.type,i.party,l.qty,l.rate,l.gross,l.gst,l.adv,l.net,bal])}}))})}let csv=rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`stockflow-${kind}.csv`;a.click()}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+let partyFilter='ALL';
+function audit(action,ref='',details=''){data.audit.unshift({id:crypto.randomUUID(),date:new Date().toISOString(),user:'Admin',action,ref,details});data.audit=data.audit.slice(0,1000);save()}
+function addWarehouse(){let name=prompt('Warehouse name:');if(!name)return;let code=prompt('Warehouse code:','WH-'+String(data.warehouses.length+1).padStart(2,'0'));data.warehouses.push({id:crypto.randomUUID(),name,code:code||'',location:prompt('Location:')||'',manager:prompt('Manager:')||'',rack:'',shelf:'',bin:'',status:'Active'});audit('CREATE WAREHOUSE',code,name);save();renderAll();toast('Warehouse added.')}
+function renderWarehouses(){$('warehouseRows').innerHTML=data.warehouses.map(w=>`<tr><td>${esc(w.name)}</td><td>${esc(w.code)}</td><td>${esc(w.location)}</td><td>${esc(w.manager)}</td><td>${esc([w.rack,w.shelf,w.bin].filter(Boolean).join(' / ')||'—')}</td><td><span class="badge green">${w.status}</span></td></tr>`).join('')||`<tr><td colspan="6" class="empty">No warehouses found.</td></tr>`;let opts=data.warehouses.map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('');$('transferFrom').innerHTML=opts;$('transferTo').innerHTML=opts;$('transferProduct').innerHTML=data.products.map(p=>`<option value="${p.id}">${esc(p.name)} (${esc(p.sku)})</option>`).join('')}
+function transferStock(){let p=data.products.find(x=>x.id===$('transferProduct').value),qty=+$('transferQty').value;if(!p||qty<=0)return toast('Select product and valid quantity.');if($('transferFrom').value===$('transferTo').value)return toast('From and To warehouses must differ.');let s=currentStock(p);if(qty>s.current)return toast(`Insufficient stock. Available: ${s.current}`);let t={id:crypto.randomUUID(),date:today(),productId:p.id,qty,from:$('transferFrom').value,to:$('transferTo').value};data.adjustments.push({id:crypto.randomUUID(),date:today(),ref:'TRF-'+Date.now(),productId:p.id,qty,type:'TRANSFER',reason:`${$('transferFrom').selectedOptions[0].text} → ${$('transferTo').selectedOptions[0].text}`,approved:'Admin'});audit('STOCK TRANSFER',t.id,`${p.name} x ${qty}`);save();renderAll();toast('Transfer recorded.')}
+function openAdjustment(){if(!data.products.length)return toast('Add products first.');let p=prompt('Product SKU or name:');let prod=data.products.find(x=>x.sku.toLowerCase()===String(p).toLowerCase()||x.name.toLowerCase()===String(p).toLowerCase());if(!prod)return toast('Product not found.');let qty=+prompt('Adjustment quantity (use positive number):','1');if(!(qty>0))return;let type=prompt('Type: INCREASE or DECREASE','DECREASE').toUpperCase();if(!['INCREASE','DECREASE'].includes(type))return;let reason=prompt('Reason:','Physical Count')||'Manual Adjustment';if(type==='DECREASE'&&qty>currentStock(prod).current)return toast('Adjustment exceeds available stock.');data.adjustments.push({id:crypto.randomUUID(),date:today(),ref:'ADJ-'+Date.now(),productId:prod.id,qty,type,reason,approved:'Admin'});audit('STOCK ADJUSTMENT',prod.sku,`${type} ${qty} — ${reason}`);save();renderAll();toast('Adjustment recorded.')}
+function renderAdjustments(){$('adjustmentRows').innerHTML=data.adjustments.length?data.adjustments.map(a=>{let p=data.products.find(x=>x.id===a.productId);return `<tr><td>${a.date}</td><td>${esc(a.ref)}</td><td>${esc(p?.name||'Deleted')}</td><td>${a.type}</td><td>${a.qty}</td><td>${esc(a.reason)}</td><td>${esc(a.approved||'—')}</td></tr>`}).join(''):`<tr><td colspan="7" class="empty">No adjustments found.</td></tr>`}
+function startStockCount(){renderCountRows();toast('Enter physical quantities, then Save Count.')}
+function renderCountRows(){ $('countRows').innerHTML=data.products.length?data.products.map(p=>{let s=currentStock(p);return `<tr><td>${esc(p.sku)}</td><td>${esc(p.name)}</td><td>${s.current}</td><td><input class="count-input" data-id="${p.id}" type="number" min="0" step="0.01" value="${s.current}" style="width:120px"></td><td class="variance" data-id="${p.id}">0</td><td><input class="count-reason" data-id="${p.id}" placeholder="Optional"></td></tr>`}).join(''):`<tr><td colspan="6" class="empty">No products found.</td></tr>`}
+function saveStockCount(){document.querySelectorAll('.count-input').forEach(inp=>{let p=data.products.find(x=>x.id===inp.dataset.id),sys=currentStock(p).current,physical=+inp.value||0,variance=physical-sys;if(variance!==0)data.counts.push({id:crypto.randomUUID(),date:today(),productId:p.id,system:sys,physical,variance,reason:document.querySelector(`.count-reason[data-id="${p.id}"]`)?.value||'',user:'Admin'});});audit('STOCK COUNT','',`Saved ${document.querySelectorAll('.count-input').length} product counts`);save();renderAll();toast('Stock count saved.')}
+function addParty(){let type=(prompt('Type: CUSTOMER or SUPPLIER','CUSTOMER')||'CUSTOMER').toUpperCase();if(!['CUSTOMER','SUPPLIER'].includes(type))return;let name=prompt('Party name:');if(!name)return;data.parties.push({id:crypto.randomUUID(),code:(type==='CUSTOMER'?'CUS-':'SUP-')+String(data.parties.length+1).padStart(4,'0'),name,type,company:prompt('Company:')||'',phone:prompt('Phone:')||'',credit:+prompt('Credit limit:','0')||0,balance:0});audit('CREATE PARTY',name,type);save();renderAll();toast('Party added.')}
+function renderParties(){let a=data.parties.filter(p=>partyFilter==='ALL'||p.type===partyFilter);$('partyRows').innerHTML=a.length?a.map(p=>`<tr><td>${p.code}</td><td><strong>${esc(p.name)}</strong></td><td><span class="badge ${p.type==='CUSTOMER'?'blue':'green'}">${p.type}</span></td><td>${esc(p.company)}</td><td>${esc(p.phone)}</td><td>${money(p.credit)}</td><td>${money(p.balance)}</td></tr>`).join(''):`<tr><td colspan="7" class="empty">No parties found.</td></tr>`}
+function addExpense(){let amount=+prompt('Amount:','0');if(!(amount>0))return;let category=prompt('Category:','General')||'General',desc=prompt('Description:')||'',paid=prompt('Paid To:')||'',method=prompt('Payment Method:','Cash')||'Cash',approved=prompt('Approved By:','Admin')||'Admin';let id='EXP-'+String(data.expenses.length+1).padStart(5,'0');data.expenses.push({id,date:today(),category,description:desc,paidTo:paid,method,amount,approved});audit('CREATE EXPENSE',id,desc);save();renderAll();toast('Expense recorded.')}
+function renderExpenses(){$('expenseRows').innerHTML=data.expenses.length?data.expenses.slice().reverse().map(e=>`<tr><td>${e.id}</td><td>${e.date}</td><td>${esc(e.category)}</td><td>${esc(e.description)}</td><td>${esc(e.paidTo)}</td><td>${esc(e.method)}</td><td class="num">${money(e.amount)}</td><td>${esc(e.approved)}</td></tr>`).join(''):`<tr><td colspan="8" class="empty">No expenses found.</td></tr>`}
+function addPayment(){let type=(prompt('Type: IN or OUT','IN')||'IN').toUpperCase();if(!['IN','OUT'].includes(type))return;let amount=+prompt('Amount:','0');if(!(amount>0))return;let party=prompt('Party:')||'',account=prompt('Account:','Cash')||'Cash',method=prompt('Method:','Cash')||'Cash',ref=prompt('Reference:')||'PAY-'+Date.now(),cheque=method.toLowerCase()==='cheque'?prompt('Cheque No.:')||'':'';data.payments.push({id:crypto.randomUUID(),date:today(),ref,party,type,account,method,amount,cheque});audit('CREATE PAYMENT',ref,`${type} ${amount}`);save();renderAll();toast('Payment recorded.')}
+function renderPayments(){let ins=data.payments.filter(p=>p.type==='IN').reduce((a,p)=>a+p.amount,0),outs=data.payments.filter(p=>p.type==='OUT').reduce((a,p)=>a+p.amount,0);$('cashIn').textContent=money(ins);$('cashOut').textContent=money(outs);$('netCash').textContent=money(ins-outs);$('paymentCount').textContent=data.payments.length;$('paymentRows').innerHTML=data.payments.length?data.payments.slice().reverse().map(p=>`<tr><td>${p.date}</td><td>${esc(p.ref)}</td><td>${esc(p.party)}</td><td><span class="badge ${p.type==='IN'?'green':'red'}">${p.type}</span></td><td>${esc(p.account)}</td><td>${esc(p.method)}</td><td class="num">${money(p.amount)}</td><td>${esc(p.cheque||'—')}</td></tr>`).join(''):`<tr><td colspan="8" class="empty">No payment transactions.</td></tr>`}
+function addCheque(){let no=prompt('Cheque Number:');if(!no)return;let type=(prompt('Type: ISSUED or RECEIVED','RECEIVED')||'RECEIVED').toUpperCase();if(!['ISSUED','RECEIVED'].includes(type))return;let party=prompt('Party:')||'',bank=prompt('Bank:')||'',account=prompt('Account:','Bank')||'Bank',due=prompt('Due Date (YYYY-MM-DD):',today())||today(),amount=+prompt('Amount:','0');if(!(amount>0))return;let status=prompt('Status: Issued / Received / Deposited / Cleared / Bounced / Cancelled',type==='ISSUED'?'Issued':'Received')||'Received';data.cheques.push({id:crypto.randomUUID(),no,date:today(),party,bank,type:type==='ISSUED'?'Issued':'Received',account,due,amount,status});audit('CREATE CHEQUE',no,`${type} ${amount}`);save();renderAll();toast('Cheque added.')}
+function renderCheques(){let st=$('chequeStatus')?.value||'',a=data.cheques.filter(c=>!st||c.status===st);$('chequeRows').innerHTML=a.length?a.slice().reverse().map(c=>`<tr><td><strong>${esc(c.no)}</strong></td><td>${c.date}</td><td>${esc(c.party)}</td><td>${esc(c.bank)}</td><td>${c.type}</td><td>${esc(c.account)}</td><td>${c.due}</td><td class="num">${money(c.amount)}</td><td><span class="badge ${c.status==='Cleared'?'green':c.status==='Bounced'?'red':'yellow'}">${c.status}</span></td><td><button class="btn btn-light" onclick="changeCheque('${c.id}')">Status</button></td></tr>`).join(''):`<tr><td colspan="10" class="empty">No cheques found.</td></tr>`}
+function changeCheque(id){let c=data.cheques.find(x=>x.id===id),s=prompt('New status:',c.status);if(!s)return;c.status=s;audit('UPDATE CHEQUE',c.no,`Status → ${s}`);save();renderAll();toast('Cheque status updated.')}
+function renderLabels(){$('labelRows').innerHTML=data.products.length?data.products.map(p=>`<tr><td><input type="checkbox" class="label-check" data-id="${p.id}"></td><td>${esc(p.sku)}</td><td>${esc(p.name)}</td><td>${esc(p.barcode)}</td><td>${money(p.retail)}</td><td><input class="label-qty" data-id="${p.id}" type="number" min="1" value="1" style="width:70px"></td></tr>`).join(''):`<tr><td colspan="6" class="empty">No products found.</td></tr>`}
+function printLabels(){let chosen=[...document.querySelectorAll('.label-check:checked')];if(!chosen.length)return toast('Select at least one product.');let out=chosen.map(ch=>{let p=data.products.find(x=>x.id===ch.dataset.id),qty=+document.querySelector(`.label-qty[data-id="${p.id}"]`).value||1;return Array.from({length:qty},()=>`<div style="display:inline-block;width:240px;height:115px;border:1px solid #000;margin:8px;padding:10px;text-align:center"><strong>${esc(p.name)}</strong><br>SKU: ${esc(p.sku)}<br>BARCODE: ${esc(p.barcode)}<br>${money(p.retail)}</div>`).join('')}).join('');$('printArea').innerHTML=out;window.print()}
+function renderAudit(){$('auditRows').innerHTML=data.audit.length?data.audit.map(a=>`<tr><td>${new Date(a.date).toLocaleString()}</td><td>${esc(a.user)}</td><td>${esc(a.action)}</td><td>${esc(a.ref)}</td><td>${esc(a.details)}</td></tr>`).join(''):`<tr><td colspan="5" class="empty">No audit activity yet.</td></tr>`}
+function backupData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='stockflow-pro-backup-'+today()+'.json';a.click();audit('BACKUP','','Full database backup downloaded');toast('Backup downloaded.')}
+function restoreData(e){let file=e.target.files[0];if(!file)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.products||!x.invoices)throw Error();data=x;save();renderAll();toast('Backup restored successfully.')}catch(err){toast('Invalid StockFlow backup file.')}};r.readAsText(file)}
+
+renderAll();
+</script>
+</body>
+</html>
